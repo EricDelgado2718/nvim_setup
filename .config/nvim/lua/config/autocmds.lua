@@ -87,3 +87,11 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 })
 
 set_rnu_colors()
+
+vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+  pattern = "*.connect",
+  callback = function()
+    vim.bo.filetype = "yaml"
+  end,
+  desc = "Set *.connect files to yaml filetype",
+})

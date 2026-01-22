@@ -1,40 +1,44 @@
+local uv = vim.uv or vim.loop
+
+local function realpath(p)
+  return (uv and uv.fs_realpath(p)) or p
+end
+
+local CONNECT_ROOT = realpath(vim.fn.expand("~/connect"))
+
+local function in_connect_repo()
+  local cwd = realpath(vim.fn.getcwd())
+  -- true if cwd == ~/connect or inside it
+  return cwd == CONNECT_ROOT or cwd:sub(1, #CONNECT_ROOT + 1) == (CONNECT_ROOT .. "/")
+end
+
 return {
   {
     "mrcjkb/rustaceanvim",
-    version = "^5", -- keep compatible updates
+    version = "^5",
     ft = { "rust" },
+    enabled = function()
+      return not in_connect_repo()
+    end,
     init = function()
+      -- your rustaceanvim settings (optional)
       vim.g.rustaceanvim = {
-        tools = {
-          hover_actions = { auto_focus = true },
-        },
         server = {
-          on_attach = function(_, bufnr)
-            -- Inlay hints (Neovim 0.10+)
-            pcall(function()
-              vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
-            end)
-          end,
           default_settings = {
-            ["rust-analyzer"] = {
-              cargo = { allFeatures = true },
-              checkOnSave = {
-                command = "clippy",
-              },
-              procMacro = { enable = true },
-            },
+            ["rust-analyzer"] = {},
           },
         },
       }
     end,
   },
 
-  -- Cargo.toml helper (versions, features, updates)
+  -- Optional: also disable crates.nvim in connect (can leave enabled if you want)
   {
     "saecki/crates.nvim",
     event = { "BufRead Cargo.toml" },
-    opts = {
-      completion = { cmp = { enabled = true } },
-    },
+    enabled = function()
+      return not in_connect_repo()
+    end,
+    opts = { completion = { cmp = { enabled = true } } },
   },
 }
